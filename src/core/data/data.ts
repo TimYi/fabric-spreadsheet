@@ -1,4 +1,4 @@
-import fabric from 'fabric'
+import { draw as fabric } from '@/canvas'
 import { HorizontalAlign, VerticalAlign, FontStyle } from './constants'
 
 export interface Point {
@@ -58,8 +58,8 @@ const DEFAULT_CELL_PROPERTY: CellProperty = {
   fontSize: 14,
   fontWeight: 'normal',
   fontFamily: 'Arial',
-  horizontalAlign: HorizontalAlign.MIDDLE,
-  verticalAlign: VerticalAlign.LEFT,
+  horizontalAlign: HorizontalAlign.LEFT,
+  verticalAlign: VerticalAlign.MIDDLE,
   underline: false,
   linethrough: false,
   overline: false,
@@ -72,7 +72,7 @@ export interface SimpleCellContent extends CellProperty {
   text: string
 }
 
-export type CellContent = fabric.fabric.Object | SimpleCellContent
+export type CellContent = fabric.CanvasObject | SimpleCellContent
 
 export interface Cell extends CellProperty {
   /**
