@@ -1,7 +1,7 @@
 <script lang="ts">
 import { Vue, Component } from 'vue-property-decorator'
 import Sheet from '@/core/Sheet.vue'
-import { Point } from '@/core/data/data'
+import { Point, Row, Cell, CellRect } from '@/core/data/data'
 @Component({
   components: { Sheet }
 })
@@ -22,8 +22,22 @@ export default class Editor extends Vue {
         getColumnCount () {
           return 20
         },
-        getRow () {
-          return null
+        getRow (ri): Row {
+          return {
+            height: null,
+            getCell (ci): Cell {
+              return {
+                getContent (cellRect: CellRect) {
+                  return {
+                    text: 'text'
+                  }
+                },
+                getContentHeight () {
+                  return null
+                }
+              }
+            }
+          }
         },
         getColumn () {
           return null

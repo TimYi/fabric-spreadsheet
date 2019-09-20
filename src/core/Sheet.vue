@@ -1,7 +1,7 @@
 <script lang="ts">
 import { fabric } from 'fabric'
 import { Vue, Component } from 'vue-property-decorator'
-import { Data, SimpleCellContent } from './data/data'
+import { Data, SimpleCellContent, DEFAULT_CELL_PROPERTY } from './data/data'
 import StateImpl from './data/state'
 import StateProxy, {
   RowRenderInfo,
@@ -9,6 +9,8 @@ import StateProxy, {
   CellRenderInfo
 } from './data/StateProxy'
 import getBorder, { defaultBorderColor, BorderStyle } from './border'
+
+fabric.Object.prototype.objectCaching = false
 
 @Component
 export default class Sheet extends Vue {
@@ -83,6 +85,7 @@ export default class Sheet extends Vue {
     this.$nextTick(() => {
       const canvas = new fabric.StaticCanvas(this.$refs
         .canvas as HTMLCanvasElement)
+      canvas.renderOnAddRemove = false
       this.canvas = canvas
       this.renderCanvas()
     })
@@ -218,7 +221,7 @@ export default class Sheet extends Vue {
       overline,
       fontStyle,
       text
-    } = content
+    } = { ...DEFAULT_CELL_PROPERTY, ...content }
     const clipPath = new fabric.Rect({
       left: showedRect.x,
       top: showedRect.y,
