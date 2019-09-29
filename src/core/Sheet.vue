@@ -1,58 +1,53 @@
-<script lang="ts">
+<script lang="tsx">
+import { Component, Prop, Mixins } from 'vue-property-decorator'
+import { CreateElement } from 'vue'
+import vuescroll from 'vuescroll'
 import { draw as fabric } from '@/canvas'
-import { Vue, Component } from 'vue-property-decorator'
-import { Data, SimpleCellContent, DEFAULT_CELL_PROPERTY } from './data/data'
+import {
+  Data,
+  SimpleCellContent,
+  DEFAULT_CELL_PROPERTY,
+  Rect
+} from './data/data'
 import StateImpl from './data/state'
-import StateProxy, {
+import {
   RowRenderInfo,
   ColumnRenderInfo,
   CellRenderInfo
 } from './data/StateProxy'
 import getBorder, { defaultBorderColor, BorderStyle } from './border'
-
+import SheetState from './SheetState'
+import Selection from './Selection'
+import CoverObjects from './CoverObjects'
+import { ZINDEX } from './constants'
 fabric.CanvasObject.prototype.objectCaching = false
 
-@Component
-export default class Sheet extends Vue {
+@Component({
+  components: {
+    'vue-scroll': vuescroll
+  }
+})
+export default class Sheet extends Mixins(SheetState, Selection, CoverObjects) {
+  @Prop({
+    type: Object,
+    default: () => {
+      return {
+        bar: {
+          background: '#CCCCCC'
+        },
+        rail: {
+          opacity: 0,
+          /** Rail's size(Height/Width) , default -> 6px */
+          size: '6px'
+        }
+      }
+    }
+  })
+  readonly scrollOps?: object;
+
   inited: boolean = false;
-  state: StateImpl | null = null;
   canvas: fabric.StaticCanvas | null = null;
   ticking = false;
-
-  get stateProxy (): StateProxy | null {
-    if (this.state) {
-      return new StateProxy(this.state)
-    }
-    return null
-  }
-
-  get canvasWidth (): number {
-    if (this.stateProxy) {
-      return this.stateProxy.getCanvasWidth()
-    }
-    return 0
-  }
-
-  get canvasHeight (): number {
-    if (this.stateProxy) {
-      return this.stateProxy.getCanvasHeight()
-    }
-    return 0
-  }
-
-  get totalWidth (): number {
-    if (this.stateProxy) {
-      return this.stateProxy.getTotalWidth()
-    }
-    return 0
-  }
-
-  get totalHeight (): number {
-    if (this.stateProxy) {
-      return this.stateProxy.getTotalHeight()
-    }
-    return 0
-  }
 
   init ({
     data,
@@ -107,14 +102,17 @@ export default class Sheet extends Vue {
     return null
   }
 
-  onScroll (e: any) {
+  scrollTo (...args: any[]) {
+    const scroll: any = this.$refs.scroll
+    scroll.scrollTo(...args)
+  }
+
+  handleScroll (vertical: any, horizontal: any) {
+    const scrollTop = vertical.scrollTop
+    const scrollLeft = horizontal.scrollLeft
     if (!this.ticking) {
       window.requestAnimationFrame(() => {
         const state = this.state!
-        const {
-          scrollTop,
-          scrollLeft
-        }: { scrollTop: number; scrollLeft: number } = e.target
         state.scrollY = scrollTop
         state.scrollX = scrollLeft
         this.renderCanvas()
@@ -140,6 +138,8 @@ export default class Sheet extends Vue {
     let time = new Date().getTime()
     canvas.renderAll()
     console.log(new Date().getTime() - time)
+    this.showedRows = rows
+    this.showedColumns = columns
   }
 
   renderCells ({
@@ -414,36 +414,98 @@ export default class Sheet extends Vue {
       }
     }
   }
+
+  render (h: CreateElement) {
+    if (!this.inited) {
+      return <div></div>
+    }
+
+    const {
+      mouseenter,
+      mousemove,
+      mouseout,
+      mousedown,
+      mouseup,
+      click,
+      dblclick,
+      contextmenu,
+      handleScroll
+    } = this
+
+    const inputEvents = {
+      on: {
+        mouseenter,
+        mousemove,
+        mouseout,
+        mousedown,
+        mouseup,
+        click,
+        dblclick,
+        contextmenu
+      }
+    }
+
+    const scrollEvents = {
+      on: {
+        'handle-scroll': handleScroll
+      }
+    }
+    return (
+      <div>
+        <div class="fabric-spreadsheet-container">
+          <div
+            style={{
+              display: 'block',
+              height: this.canvasHeight + 15 + 'px',
+              width: this.canvasWidth + 15 + 'px'
+            }}
+          ></div>
+          <div class="fabric-spreadsheet-canvas" style={{ zIndex: ZINDEX.CANVAS_LAYER }}>
+            <canvas ref="canvas"></canvas>
+          </div>
+          <div class="fabric-spreadsheet-overlayer" style={{ zIndex: ZINDEX.UNDER_COVER_LAYER }}>
+            {this.internalCoverObjects.map(o => o.render(h, o.rect, o.borderCondition))}
+          </div>
+          <div
+            class="fabric-spreadsheet-overlayer"
+            style={{
+              height: this.canvasHeight + 'px',
+              width: this.canvasWidth + 'px',
+              zIndex: ZINDEX.COVER_LAYER
+            }}
+            {...inputEvents}
+          >
+            <vue-scroll ref="scroll" ops={this.scrollOps} {...scrollEvents}>
+              <div
+                style={{
+                  height: this.totalHeight + 'px',
+                  width: this.totalWidth + 'px'
+                }}
+              ></div>
+            </vue-scroll>
+          </div>
+        </div>
+      </div>
+    )
+  }
 }
 </script>
 
-<template>
-  <div>
-    <div class="fabric-spreadsheet-container" v-if="inited">
-      <canvas ref="canvas"></canvas>
-      <div
-        @scroll.passive="onScroll"
-        class="fabric-spreadsheet-overlayer"
-        :style="{height: (canvasHeight) + 'px', width: (canvasWidth) + 'px'}"
-      >
-        <div :style="{height: (totalHeight) + 'px', width: (totalWidth) + 'px'}"></div>
-      </div>
-    </div>
-  </div>
-</template>
-
 <style lang="scss">
 .fabric-spreadsheet-container {
-  display: inline-block;
   position: relative;
-  padding-bottom: 15px;
-  padding-right: 15px;
+  overflow: hidden;
+}
+.fabric-spreadsheet-canvas {
+  position: absolute;
+  left: 0;
+  top: 0;
 }
 .fabric-spreadsheet-overlayer {
   position: absolute;
-  top: 0;
   left: 0;
-  overflow-x: auto;
-  overflow-y: auto;
+  right: 0;
+  top: 0;
+  bottom: 0;
 }
 </style>

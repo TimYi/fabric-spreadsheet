@@ -389,7 +389,8 @@ export default class StateProxy {
         if (mergeCell != null) {
           for (let i = 0; i < mergeCell.rowspan; i++) {
             for (let j = 0; j < mergeCell.colspan; j++) {
-              mergedCells.add(i + '-' + j)
+              const mergedCellStr = (mergeCell.row + i) + '-' + (mergeCell.col + j)
+              mergedCells.add(mergedCellStr)
             }
           }
           // find all rows and columns inside render range
@@ -467,12 +468,13 @@ export default class StateProxy {
               content = cell.getContent(cellRect)
             }
           }
-          result.push({
+          const mergeCellRender = {
             ...cellRect,
             rowspan: mergeCell.rowspan,
             colspan: mergeCell.colspan,
             content
-          })
+          }
+          result.push(mergeCellRender)
 
           continue
         }
