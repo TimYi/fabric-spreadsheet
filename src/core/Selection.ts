@@ -5,6 +5,8 @@ import SheetState from './SheetState'
 export interface CellPoint {
   x: number
   y: number
+  cellX: number
+  cellY: number
   row: number
   col: number
 }
@@ -15,7 +17,7 @@ export default class Selection extends SheetState {
     const { showedRows, showedColumns } = this
     if (showedRows == null || showedRows.length === 0 || showedColumns == null || showedColumns.length === 0) {
       return {
-        x, y, row: -1, col: -1
+        x, y, row: -1, col: -1, cellX: -1, cellY: -1
       }
     }
 
@@ -47,7 +49,7 @@ export default class Selection extends SheetState {
         return 0
       }
     })
-    let row: number, col: number
+    let row: number, col: number, cellX: number, cellY: number
     if (showedRow == null) {
       row = -1
     } else {
@@ -58,39 +60,54 @@ export default class Selection extends SheetState {
     } else {
       col = showedCol.col
     }
+    if (showedRow && showedCol) {
+      cellX = x - showedCol.realStartIndex
+      cellY = y - showedRow.realStartIndex
+    } else {
+      cellX = -1
+      cellY = -1
+    }
 
-    return { x, y, row, col }
+    return { x, y, row, col, cellX, cellY }
   }
 
   mouseenter (e: MouseEvent) {
-    this.$emit('mouseenter', e)
+    const point = this.getCellPoint(e.offsetX, e.offsetY)
+    this.$emit('mouseenter', e, point)
   }
 
   mousemove (e: MouseEvent) {
-    this.$emit('mousemove', e)
+    const point = this.getCellPoint(e.offsetX, e.offsetY)
+    this.$emit('mousemove', e, point)
   }
 
   mouseout (e: MouseEvent) {
-    this.$emit('mouseout', e)
+    const point = this.getCellPoint(e.offsetX, e.offsetY)
+    this.$emit('mouseout', e, point)
   }
 
   mousedown (e: MouseEvent) {
-    this.$emit('mousedown', e)
+    const point = this.getCellPoint(e.offsetX, e.offsetY)
+    this.$emit('mousedown', e, point)
   }
 
   mouseup (e: MouseEvent) {
-    this.$emit('mouseup', e)
+    const point = this.getCellPoint(e.offsetX, e.offsetY)
+    this.$emit('mouseup', e, point)
   }
 
   click (e: MouseEvent) {
-    this.$emit('click', e)
+    const point = this.getCellPoint(e.offsetX, e.offsetY)
+    this.$emit('click', e, point)
   }
 
   dblclick (e: MouseEvent) {
-    this.$emit('dblclick', e)
+    const point = this.getCellPoint(e.offsetX, e.offsetY)
+    this.$emit('dblclick', e, point)
   }
 
   contextmenu (e: MouseEvent) {
-    this.$emit('contextmenu', e)
+    const point = this.getCellPoint(e.offsetX, e.offsetY)
+    this.$emit('contextmenu', e, point)
   }
 }

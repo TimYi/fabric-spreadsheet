@@ -4,6 +4,7 @@ import { CreateElement } from 'vue'
 import Sheet from '@/core/Sheet.vue'
 import { Point, Row, Cell, CellRect } from '@/core/data/data'
 import { CoverObject } from '../core/CoverObjects'
+import { ZINDEX } from '../core/constants'
 @Component({
   components: { Sheet }
 })
@@ -19,10 +20,11 @@ export default class Editor extends Vue {
   initCoverObjects () {
     const coverObjects: Array<CoverObject> = [
       {
-        row: 3,
-        col: 3,
+        row: 6,
+        col: 2,
         rowspan: 2,
         colspan: 2,
+        zindex: ZINDEX.UNDER_COVER_LAYER,
         render: (h, rect, borderConditions) => {
           const style: any = {
             position: 'absolute',
@@ -45,6 +47,37 @@ export default class Editor extends Vue {
             style.borderBottom = 'blue solid 2px'
           }
           return <div style={style}></div>
+        }
+      },
+      {
+        row: 0,
+        col: 0,
+        rowspan: 1,
+        colspan: 1,
+        zindex: ZINDEX.ABOVE_COVER_LAYER,
+        render: (h, rect, borderConditions) => {
+          const style: any = {
+            position: 'absolute',
+            boxSizing: 'border-box',
+            left: rect.x + 'px',
+            top: rect.y + 'px',
+            width: rect.width + 'px',
+            minHeight: rect.height + 'px',
+            height: 'auto'
+          }
+          if (!borderConditions.leftCovered) {
+            style.borderLeft = 'blue solid 2px'
+          }
+          if (!borderConditions.rightCovered) {
+            style.borderRight = 'blue solid 2px'
+          }
+          if (!borderConditions.topCovered) {
+            style.borderTop = 'blue solid 2px'
+          }
+          if (!borderConditions.bottomCovered) {
+            style.borderBottom = 'blue solid 2px'
+          }
+          return <textarea style={style}></textarea>
         }
       }
     ]
@@ -127,6 +160,6 @@ export default class Editor extends Vue {
 
 <template>
   <div>
-    <sheet ref="sheet" :cover-objects="coverObjects"></sheet>
+    <sheet ref="sheet" :cover-objects="coverObjects" cursor="pointer"></sheet>
   </div>
 </template>

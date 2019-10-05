@@ -1,5 +1,6 @@
 import { draw as fabric } from '@/canvas'
 import { HorizontalAlign, VerticalAlign, FontStyle } from './constants'
+import { CellPoint } from '../Selection'
 
 export interface Point {
   row: number
@@ -85,6 +86,8 @@ export interface Cell extends CellProperty {
    * If null is returned, that means this data model don't support auto height.
    */
   getContentHeight: () => number | null
+
+  eventListener?: (event: string, cellPoint: CellPoint) => void
 }
 
 export interface RowProperty {

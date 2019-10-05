@@ -45,6 +45,9 @@ export default class Sheet extends Mixins(SheetState, Selection, CoverObjects) {
   })
   readonly scrollOps?: object;
 
+  @Prop({ type: String })
+  readonly cursor?: string;
+
   inited: boolean = false;
   canvas: fabric.StaticCanvas | null = null;
   ticking = false;
@@ -471,7 +474,8 @@ export default class Sheet extends Mixins(SheetState, Selection, CoverObjects) {
             style={{
               height: this.canvasHeight + 'px',
               width: this.canvasWidth + 'px',
-              zIndex: ZINDEX.COVER_LAYER
+              zIndex: ZINDEX.COVER_LAYER,
+              cursor: this.cursor
             }}
             {...inputEvents}
           >
@@ -483,6 +487,7 @@ export default class Sheet extends Mixins(SheetState, Selection, CoverObjects) {
                 }}
               ></div>
             </vue-scroll>
+            {this.editor ? this.editor.render(h, this.editor.rect, this.editor.borderCondition) : null}
           </div>
         </div>
       </div>
